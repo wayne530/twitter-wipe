@@ -53,6 +53,11 @@ TWITTER_ACCESS_SECRET=<Access token secret>
 
 ## Run the script
 
-* `node twitterWipe.js <your twitter username>`
+* `node twitterWipe.js`
 
-As mentioned above, the API to delete tweets is rate limited to 50 requests per 15 minutes but the script automatically handles rate limit responses, retries, and sleeps. If you have a large number of tweets, you can roughly calculate how long the script will take to run. I recommend running it in `screen` but the script can be easily resumed if it's interrupted for some reason.
+As mentioned above, the API to delete tweets is rate limited to 50 requests per 15 minutes but the script automatically handles rate limit responses, retries, and sleeps. If you have a large number of tweets, you can roughly calculate how long the script will take to run. I recommend running it in `screen` but the script can be easily resumed if it's interrupted for some reason:
+
+* `screen`
+* `node twitterWipe.js | tee output.log`
+* `Ctrl A-d` to detach the screen
+* `screen -r` to reattach the screen
