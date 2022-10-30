@@ -2,18 +2,6 @@ require('dotenv').config();
 const { TwitterApi } = require('twitter-api-v2');
 const prompt = require('prompt-sync')();
 
-if (process.argv.length < 3) {
-    console.error('Usage: node twitterWipe.js <screen_name>');
-    process.exit(1);
-}
-const screenName = process.argv[2];
-
-const response = prompt(`Are you sure you want to delete all tweets from @${screenName}? [y/N]: `).toLowerCase();
-if (response !== 'y') {
-    console.log('Aborting');
-    process.exit(0);
-}
-
 const main = async function() {
     const client = new TwitterApi({
         appKey: process.env.TWITTER_CONSUMER_KEY,
@@ -22,6 +10,12 @@ const main = async function() {
         accessSecret: process.env.TWITTER_ACCESS_SECRET
     });
     const user = await client.currentUserV2();
+    const response = prompt(`Are you sure you want to delete all tweets from @${user.data.username}? [y/N]: `).toLowerCase();
+    if (response !== 'y') {
+        console.log('Aborting');
+        process.exit(0);
+    }
+
     const tweetsPaginator = await client.v2.userTimeline(user.data.id, { max_results: 100 });
     for await (const tweet of tweetsPaginator) {
         console.log(`Deleting tweet ${tweet.id}: ${tweet.text}`);
