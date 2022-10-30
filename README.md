@@ -7,7 +7,7 @@ Note that deleting tweets are limited to 50 requests per 15-minute window as of 
 Consequently, if you have many tweets, the script will take a long time to run. Thankfully, all rate limiting/retry is built in.
 
 ## Requirements
-* NodeJS 16.x
+* NodeJS 16.x / npm 8.19.x
 * Existing Twitter account with verified phone number
 * Twitter API consumer key/secret (see steps below)
 * Access token/secret for your account (see steps below)
