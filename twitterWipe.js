@@ -2,6 +2,22 @@ require('dotenv').config();
 const { TwitterApi } = require('twitter-api-v2');
 const prompt = require('prompt-sync')();
 
+let allKeysPresent = true;
+[
+    'TWITTER_CONSUMER_KEY',
+    'TWITTER_CONSUMER_SECRET',
+    'TWITTER_ACCESS_TOKEN',
+    'TWITTER_ACCESS_SECRET'
+].forEach((key) => {
+    if (! (key in process.env)) {
+        console.error(`Missing required ${key} environment variable`);
+        allKeysPresent = false;
+    }
+});
+if (! allKeysPresent) {
+    process.exit(1);
+}
+
 const main = async function() {
     const client = new TwitterApi({
         appKey: process.env.TWITTER_CONSUMER_KEY,
