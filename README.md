@@ -53,7 +53,33 @@ TWITTER_ACCESS_SECRET=<Access token secret>
 
 ## Run the script
 
-* `node twitterWipe.js`
+### Command-line arguments
+
+* `node twitterWipe.js --help`
+```
+Usage: node twitterWipe.js [options]
+Options:
+  -h, --help        Show this help message
+  -d, --dry-run     Do not actually delete tweets
+  -s, --start-time  Start datetime; tweets on or after this time will be deleted
+  -e, --end-time    End datetime; tweets on or before this time will be deleted
+```
+
+### Dry-run mode
+
+Running the script in dry-run mode will display all the tweets that *would* be deleted but won't actually perform the deletion. By default, the script does *NOT* run in dry-run mode. To run the script in dry-run mode, pass the option `--dry-run` or `-d`.
+
+### Start and end time limits
+
+By default, the script will target all tweets for deletion but if you wish to limit to a particular timeframe, you may use any combination of the start time and end time options.
+
+Start and end time options may be a date only, in which case midnight of the specified date is assumed, or a date and time. All dates and times are assumed to be UTC.
+
+For example, if you wish to delete all tweets created on or after Jan 1, 2011, you can pass `--start-time 2011-01-01` or `-s 2011-01-01`.
+
+If you wish to delete all tweets created on or *before* Dec 31, 2019 at 23:59:59, you can pass `--end-time 2019-12-31T23:59:59` or `-e 2019-12-31T23:59:59`.
+
+### Running in `screen`
 
 As mentioned above, the API to delete tweets is rate limited to 50 requests per 15 minutes but the script automatically handles rate limit responses, retries, and sleeps. If you have a large number of tweets, you can roughly calculate how long the script will take to run. I recommend running it in `screen` but the script can be easily resumed if it's interrupted for some reason:
 
