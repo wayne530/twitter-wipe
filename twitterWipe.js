@@ -1,8 +1,10 @@
 require('dotenv').config();
 const { TwitterApi } = require('twitter-api-v2');
 const prompt = require('prompt-sync')();
+const commandLineArgs = require('command-line-args');
+const moment = require('moment');
 
-let allKeysPresent = true;
+let allEnvKeysPresent = true;
 [
     'TWITTER_CONSUMER_KEY',
     'TWITTER_CONSUMER_SECRET',
@@ -11,11 +13,68 @@ let allKeysPresent = true;
 ].forEach((key) => {
     if (! (key in process.env)) {
         console.error(`Missing required ${key} environment variable`);
-        allKeysPresent = false;
+        allEnvKeysPresent = false;
     }
 });
-if (! allKeysPresent) {
+if (! allEnvKeysPresent) {
     process.exit(1);
+}
+
+const usage = () => {
+    console.log('Usage: node twitterWipe.js [options]');
+    console.log('Options:');
+    console.log('  -h, --help        Show this help message');
+    console.log('  -d, --dry-run     Do not actually delete tweets');
+    console.log('  -s, --start-time  Start datetime; tweets on or after this time will be deleted');
+    console.log('  -e, --end-time    End datetime; tweets on or before this time will be deleted');
+    process.exit(0);
+};
+
+const validateAndNormalizeDatetimes = (options) => {
+    if (! ('start-time' in options) && ! ('end-time' in options)) {
+        return options;
+    }
+
+    if ('start-time' in options) {
+        const startTime = moment.utc(options['start-time']);
+        if (! startTime.isValid()) {
+            throw new Error(`Invalid start time: ${options['start-time']}`);
+        }
+        options['start-time'] = startTime.format();
+    }
+
+    if ('end-time' in options) {
+        const endTime = moment.utc(options['end-time']);
+        if (! endTime.isValid()) {
+            throw new Error(`Invalid end time: ${options['end-time']}`);
+        }
+        options['end-time'] = endTime.format();
+    }
+
+    if ('start-time' in options && 'end-time' in options) {
+        if (moment.utc(options['start-time']) > moment.utc(options['end-time'])) {
+            throw new Error('Start time must be before end time');
+        }
+    }
+
+    return options;
+};
+
+let options;
+try {
+    options = validateAndNormalizeDatetimes(commandLineArgs([
+        { name: 'help', alias: 'h', type: Boolean },
+        { name: 'dry-run', alias: 'd', type: Boolean },
+        { name: 'start-time', alias: 's', type: String },
+        { name: 'end-time', alias: 'e', type: String }
+    ]));
+} catch (err) {
+    console.error(`ERROR: ${err.message}\n`);
+    usage();
+}
+
+if (options.help) {
+    usage();
 }
 
 const main = async function() {
@@ -26,19 +85,28 @@ const main = async function() {
         accessSecret: process.env.TWITTER_ACCESS_SECRET
     });
     const user = await client.currentUserV2();
+    const userTimelineOptions = {
+        'tweet.fields': 'created_at',
+        max_results: 100,
+        ...(options['start-time'] ? { 'start_time': options['start-time'] } : {}),
+        ...(options['end-time'] ? { 'end_time': options['end-time'] } : {})
+    };
+    console.log(userTimelineOptions);
     const response = prompt(`Are you sure you want to delete all tweets from @${user.data.username}? [y/N]: `).toLowerCase();
     if (response !== 'y') {
         console.log('Aborting');
         process.exit(0);
     }
 
-    const tweetsPaginator = await client.v2.userTimeline(user.data.id, { max_results: 100 });
+    const tweetsPaginator = await client.v2.userTimeline(user.data.id, userTimelineOptions);
     for await (const tweet of tweetsPaginator) {
-        console.log(`Deleting tweet ${tweet.id}: ${tweet.text}`);
+        console.log(`${options['dry-run'] ? '[dry run] ' : ''}Deleting tweet ${tweet.id}: ${tweet.text} (${tweet.created_at})`);
         let success = false;
         do {
             try {
-                await client.v2.deleteTweet(tweet.id);
+                if (! options['dry-run']) {
+                    await client.v2.deleteTweet(tweet.id);
+                }
                 success = true;
             } catch (err) {
                 if (err.code === 429) {
