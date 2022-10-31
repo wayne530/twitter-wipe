@@ -79,6 +79,8 @@ For example, if you wish to delete all tweets created on or after Jan 1, 2011, y
 
 If you wish to delete all tweets created on or *before* Dec 31, 2019 at 23:59:59, you can pass `--end-time 2019-12-31T23:59:59` or `-e 2019-12-31T23:59:59`.
 
+If using both start and end time linits, your start time must be *before* your end time.
+
 ### Running in `screen`
 
 As mentioned above, the API to delete tweets is rate limited to 50 requests per 15 minutes but the script automatically handles rate limit responses, retries, and sleeps. If you have a large number of tweets, you can roughly calculate how long the script will take to run. I recommend running it in `screen` but the script can be easily resumed if it's interrupted for some reason:
