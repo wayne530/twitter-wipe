@@ -4,19 +4,9 @@ const prompt = require('prompt-sync')();
 const commandLineArgs = require('command-line-args');
 const moment = require('moment');
 
-let allEnvKeysPresent = true;
-[
-    'TWITTER_CONSUMER_KEY',
-    'TWITTER_CONSUMER_SECRET',
-    'TWITTER_ACCESS_TOKEN',
-    'TWITTER_ACCESS_SECRET'
-].forEach((key) => {
-    if (! (key in process.env)) {
-        console.error(`Missing required ${key} environment variable`);
-        allEnvKeysPresent = false;
-    }
-});
-if (! allEnvKeysPresent) {
+const { allEnvKeysPresent } = require('./lib/common');
+
+if (! allEnvKeysPresent()) {
     process.exit(1);
 }
 
@@ -91,8 +81,14 @@ const main = async function() {
         ...(options['start-time'] ? { 'start_time': options['start-time'] } : {}),
         ...(options['end-time'] ? { 'end_time': options['end-time'] } : {})
     };
-    console.log(userTimelineOptions);
-    const response = prompt(`Are you sure you want to delete all tweets from @${user.data.username}? [y/N]: `).toLowerCase();
+    const promptMessage = `Are you sure you want to delete all tweets from @${user.data.username}` + (
+        options['start-time'] && options['end-time'] ? ` created between ${options['start-time']} and ${options['end-time']}` : (
+            options['start-time'] ? ` created on or after ${options['start-time']}` : (
+                options['end-time'] ? ` created on or before ${options['end-time']}` : ''
+            )
+        )
+    );
+    const response = prompt(`${promptMessage}? [y/N]: `).toLowerCase();
     if (response !== 'y') {
         console.log('Aborting');
         process.exit(0);
